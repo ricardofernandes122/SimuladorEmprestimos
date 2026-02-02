@@ -12,12 +12,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardOptions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.simuladoremprestimmos.domain.CalculoEmprestimo
@@ -34,8 +34,7 @@ fun SimulacaoScreen(modifier: Modifier = Modifier) {
     var erro by remember { mutableStateOf<String?>(null) }
 
     Column(
-        modifier = modifier
-            .padding(16.dp),
+        modifier = modifier.padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text(
@@ -86,7 +85,7 @@ fun SimulacaoScreen(modifier: Modifier = Modifier) {
                             meses = meses
                         )
                     } catch (e: IllegalArgumentException) {
-                        erro = e.message ?: "Valores inválidos."
+                        erro = e.message
                     }
                 }
             },
@@ -103,7 +102,7 @@ fun SimulacaoScreen(modifier: Modifier = Modifier) {
         }
 
         if (resultado != null) {
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(6.dp))
             ResultadoCard(resultado = resultado!!)
         }
     }
@@ -112,9 +111,11 @@ fun SimulacaoScreen(modifier: Modifier = Modifier) {
 @Composable
 private fun ResultadoCard(resultado: ResultadoEmprestimo) {
     Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
             Text("Resultado", style = MaterialTheme.typography.titleMedium)
-
             Text("Prestação mensal: ${formatEuro(resultado.prestacaoMensal)}")
             Text("Total pago: ${formatEuro(resultado.totalPago)}")
             Text("Total de juros: ${formatEuro(resultado.totalJuros)}")
@@ -125,3 +126,4 @@ private fun ResultadoCard(resultado: ResultadoEmprestimo) {
 private fun formatEuro(valor: Double): String {
     return String.format(Locale.getDefault(), "%.2f €", valor)
 }
+
