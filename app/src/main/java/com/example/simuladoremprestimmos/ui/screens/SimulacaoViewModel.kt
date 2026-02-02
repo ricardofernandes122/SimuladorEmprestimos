@@ -94,19 +94,34 @@ class SimulacaoViewModel : ViewModel() {
     }
 
     private fun validarMontante(texto: String): String? {
-        if (texto.isBlank()) return "Obrigatório."
-        val v = texto.toDoubleOrNull() ?: return "Valor inválido."
+        val t = texto.trim()
+        if (t.isBlank()) return "Obrigatório."
+
+        // Permite o utilizador escrever com vírgula (PT) ou ponto
+        val normalizado = t.replace(',', '.')
+
+        // Aceita só dígitos e no máximo 1 separador decimal e até 2 casas decimais
+        val regex = Regex("^\\d+(\\.\\d{0,2})?$")
+        if (!regex.matches(normalizado)) return "Use até 2 casas decimais."
+
+        val v = normalizado.toDoubleOrNull() ?: return "Valor inválido."
         if (v <= 0.0) return "Tem de ser maior que 0."
+
+        // (opcional) limites realistas
+        if (v > 1_000_000.0) return "Montante demasiado alto (máx. 1 000 000€)."
+
         return null
     }
+
 
     private fun validarTaxa(texto: String): String? {
         if (texto.isBlank()) return "Obrigatório."
         val v = texto.toDoubleOrNull() ?: return "Valor inválido."
         if (v <= 0.0) return "Tem de ser maior que 0."
-        if (v > 200.0) return "Taxa demasiado alta."
+        if (v > 50.0) return "Taxa anual demasiado alta (máx. 50%)."
         return null
     }
+
 
     private fun validarMeses(texto: String): String? {
         if (texto.isBlank()) return "Obrigatório."

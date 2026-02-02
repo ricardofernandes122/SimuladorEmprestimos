@@ -1,15 +1,23 @@
 package com.example.simuladoremprestimmos.ui.screens
 
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -57,71 +65,113 @@ private fun SimulacaoContent(
     onSimular: () -> Unit
 ) {
     val focusManager = LocalFocusManager.current
+    val scrollState = rememberScrollState()
 
     Column(
-        modifier = modifier.padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Text("Simulador de Empréstimos", style = MaterialTheme.typography.headlineSmall)
-
-        OutlinedTextField(
-            value = state.montanteText,
-            onValueChange = onMontanteChange,
-            label = { Text("Montante (€)") },
-            modifier = Modifier.fillMaxWidth(),
-            isError = state.montanteErro != null,
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Number,
-                imeAction = ImeAction.Next
-            ),
-            keyboardActions = KeyboardActions(
-                onNext = { focusManager.moveFocus(FocusDirection.Down) }
-            )
+        modifier = modifier
+            .padding(16.dp)
+            .verticalScroll(scrollState),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    )  {
+        Text(
+            "Simulador de Empréstimos",
+            style = MaterialTheme.typography.headlineMedium
         )
-        state.montanteErro?.let {
-            Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-        }
 
-        OutlinedTextField(
-            value = state.taxaText,
-            onValueChange = onTaxaChange,
-            label = { Text("Taxa anual (%)") },
+        // ✅ Card branco + borda fina (profissional)
+        Card(
             modifier = Modifier.fillMaxWidth(),
-            isError = state.taxaErro != null,
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Number,
-                imeAction = ImeAction.Next
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
             ),
-            keyboardActions = KeyboardActions(
-                onNext = { focusManager.moveFocus(FocusDirection.Down) }
-            )
-        )
-        state.taxaErro?.let {
-            Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-        }
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    "Dados do empréstimo",
+                    style = MaterialTheme.typography.titleMedium
+                )
 
-        OutlinedTextField(
-            value = state.mesesText,
-            onValueChange = onMesesChange,
-            label = { Text("Prazo (meses)") },
-            modifier = Modifier.fillMaxWidth(),
-            isError = state.mesesErro != null,
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Number,
-                imeAction = ImeAction.Done
-            ),
-            keyboardActions = KeyboardActions(
-                onDone = {
-                    focusManager.clearFocus()
-                    if (state.podeSimular) onSimular()
+                OutlinedTextField(
+                    value = state.montanteText,
+                    onValueChange = onMontanteChange,
+                    label = { Text("Montante (€)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    isError = state.montanteErro != null,
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number,
+                        imeAction = ImeAction.Next
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                    )
+                )
+                state.montanteErro?.let {
+                    Text(
+                        it,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall
+                    )
                 }
-            )
-        )
-        state.mesesErro?.let {
-            Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+
+                OutlinedTextField(
+                    value = state.taxaText,
+                    onValueChange = onTaxaChange,
+                    label = { Text("Taxa anual (%)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    isError = state.taxaErro != null,
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number,
+                        imeAction = ImeAction.Next
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                    )
+                )
+                state.taxaErro?.let {
+                    Text(
+                        it,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+
+                OutlinedTextField(
+                    value = state.mesesText,
+                    onValueChange = onMesesChange,
+                    label = { Text("Prazo (meses)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    isError = state.mesesErro != null,
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number,
+                        imeAction = ImeAction.Done
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            focusManager.clearFocus()
+                            if (state.podeSimular) onSimular()
+                        }
+                    )
+                )
+                state.mesesErro?.let {
+                    Text(
+                        it,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
         }
 
-        // ✅ Botão principal: Simular
+        // ✅ Botão principal
         Button(
             onClick = {
                 focusManager.clearFocus()
@@ -129,26 +179,31 @@ private fun SimulacaoContent(
             },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(48.dp),
-            enabled = state.podeSimular
+                .height(52.dp),
+            shape = RoundedCornerShape(14.dp),
+            enabled = state.podeSimular,
+            colors = ButtonDefaults.buttonColors()
         ) {
-            Text("Simular")
+            Text("Simular", style = MaterialTheme.typography.titleSmall)
         }
 
-        // ✅ Botão secundário: Limpar
+        // ✅ Botão secundário
         OutlinedButton(
             onClick = {
                 focusManager.clearFocus()
                 onLimpar()
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
+            shape = RoundedCornerShape(14.dp)
         ) {
-            Text("Limpar")
+            Text("Limpar", style = MaterialTheme.typography.titleSmall)
         }
 
-        // ✅ Resultado com detalhes do cálculo
+        // ✅ Resultado
         state.resultado?.let { res ->
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(4.dp))
             ResultadoCard(
                 resultado = res,
                 montante = state.montanteText.toDoubleOrNull() ?: 0.0,
@@ -168,26 +223,47 @@ private fun ResultadoCard(
 ) {
     val taxaMensal = taxaAnual / 12.0
 
-    Card(modifier = Modifier.fillMaxWidth()) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Text("Resultado", style = MaterialTheme.typography.titleMedium)
 
-            // ✅ Detalhes do pedido (académico/profissional)
-            Text("Montante: ${formatEuro(montante)}")
-            Text("Taxa anual: ${formatPercent(taxaAnual)}")
-            Text("Prazo: $meses meses")
-            Text("Taxa mensal (aprox.): ${formatPercent(taxaMensal)}")
+            Text("Resumo do pedido", style = MaterialTheme.typography.labelLarge)
+            InfoRow("Montante", formatEuro(montante))
+            InfoRow("Taxa anual", formatPercent(taxaAnual))
+            InfoRow("Prazo", "$meses meses")
+            InfoRow("Taxa mensal (aprox.)", formatPercent(taxaMensal))
 
-            Spacer(modifier = Modifier.height(8.dp))
+            HorizontalDivider()
 
-            // ✅ Resultado do cálculo
-            Text("Prestação mensal: ${formatEuro(resultado.prestacaoMensal)}")
-            Text("Total pago: ${formatEuro(resultado.totalPago)}")
-            Text("Total de juros: ${formatEuro(resultado.totalJuros)}")
+            Text("Resumo financeiro", style = MaterialTheme.typography.labelLarge)
+            InfoRow("Prestação mensal", formatEuro(resultado.prestacaoMensal))
+            InfoRow("Total pago", formatEuro(resultado.totalPago))
+            InfoRow("Total de juros", formatEuro(resultado.totalJuros))
         }
+    }
+}
+
+@Composable
+private fun InfoRow(label: String, value: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 2.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(label, style = MaterialTheme.typography.bodyMedium)
+        Text(value, style = MaterialTheme.typography.bodyMedium)
     }
 }
 
