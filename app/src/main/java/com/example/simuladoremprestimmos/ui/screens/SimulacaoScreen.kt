@@ -6,32 +6,27 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import com.example.simuladoremprestimmos.domain.CalculoEmprestimo
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.simuladoremprestimmos.domain.ResultadoEmprestimo
+import com.example.simuladoremprestimmos.viewmodel.SimulacaoViewModel
 import java.util.Locale
 
 @Composable
-fun SimulacaoScreen(modifier: Modifier = Modifier) {
-    var montanteText by remember { mutableStateOf("") }
-    var taxaText by remember { mutableStateOf("") }
-    var mesesText by remember { mutableStateOf("") }
-
-    var resultado by remember { mutableStateOf<ResultadoEmprestimo?>(null) }
-    var erro by remember { mutableStateOf<String?>(null) }
+fun SimulacaoScreen(
+    modifier: Modifier = Modifier,
+    vm: SimulacaoViewModel = viewModel()
+) {
+    val state = vm.uiState
 
     Column(
         modifier = modifier.padding(16.dp),
@@ -43,67 +38,52 @@ fun SimulacaoScreen(modifier: Modifier = Modifier) {
         )
 
         OutlinedTextField(
-            value = montanteText,
-            onValueChange = { montanteText = it.replace(',', '.') },
+            value = state.montanteText,
+            onValueChange = vm::onMontanteChange,
             label = { Text("Montante (€)") },
             modifier = Modifier.fillMaxWidth(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            isError = state.montanteErro != null,
+            supportingText = {
+                state.montanteErro?.let { Text(it) }
+            }
         )
 
         OutlinedTextField(
-            value = taxaText,
-            onValueChange = { taxaText = it.replace(',', '.') },
+            value = state.taxaText,
+            onValueChange = vm::onTaxaChange,
             label = { Text("Taxa anual (%)") },
             modifier = Modifier.fillMaxWidth(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            isError = state.taxaErro != null,
+            supportingText = {
+                state.taxaErro?.let { Text(it) }
+            }
         )
 
         OutlinedTextField(
-            value = mesesText,
-            onValueChange = { mesesText = it.filter { c -> c.isDigit() } },
+            value = state.mesesText,
+            onValueChange = vm::onMesesChange,
             label = { Text("Prazo (meses)") },
             modifier = Modifier.fillMaxWidth(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            isError = state.mesesErro != null,
+            supportingText = {
+                state.mesesErro?.let { Text(it) }
+            }
         )
 
         Button(
-            onClick = {
-                erro = null
-                resultado = null
-
-                val montante = montanteText.toDoubleOrNull()
-                val taxa = taxaText.toDoubleOrNull()
-                val meses = mesesText.toIntOrNull()
-
-                if (montante == null || taxa == null || meses == null) {
-                    erro = "Preenche todos os campos com valores válidos."
-                } else {
-                    try {
-                        resultado = CalculoEmprestimo.calcular(
-                            montante = montante,
-                            taxaAnual = taxa,
-                            meses = meses
-                        )
-                    } catch (e: IllegalArgumentException) {
-                        erro = e.message
-                    }
-                }
-            },
-            modifier = Modifier.fillMaxWidth()
+            onClick = vm::simular,
+            modifier = Modifier.fillMaxWidth(),
+            enabled = state.podeSimular
         ) {
             Text("Simular")
         }
 
-        if (erro != null) {
-            Text(
-                text = erro!!,
-                color = MaterialTheme.colorScheme.error
-            )
-        }
-
-        if (resultado != null) {
-            Spacer(modifier = Modifier.height(6.dp))
-            ResultadoCard(resultado = resultado!!)
+        if (state.resultado != null) {
+            Spacer(modifier = Modifier.height(8.dp))
+            ResultadoCard(resultado = state.resultado!!)
         }
     }
 }
@@ -126,4 +106,3 @@ private fun ResultadoCard(resultado: ResultadoEmprestimo) {
 private fun formatEuro(valor: Double): String {
     return String.format(Locale.getDefault(), "%.2f €", valor)
 }
-
