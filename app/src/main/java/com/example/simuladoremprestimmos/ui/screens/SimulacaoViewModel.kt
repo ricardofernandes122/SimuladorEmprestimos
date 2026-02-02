@@ -12,73 +12,84 @@ class SimulacaoViewModel : ViewModel() {
     var uiState by mutableStateOf(SimulacaoUiState())
         private set
 
+    // Centraliza updates (menos repetição e mais limpo)
+    private fun updateState(transform: (SimulacaoUiState) -> SimulacaoUiState) {
+        uiState = transform(uiState)
+    }
+
     fun onMontanteChange(novo: String) {
         val texto = novo.replace(',', '.')
-        uiState = uiState.copy(
-            montanteText = texto,
-            montanteErro = validarMontante(texto),
-            resultado = null
-        )
+        updateState { s ->
+            s.copy(
+                montanteText = texto,
+                montanteErro = validarMontante(texto),
+                resultado = null
+            )
+        }
     }
 
     fun onTaxaChange(novo: String) {
         val texto = novo.replace(',', '.')
-        uiState = uiState.copy(
-            taxaText = texto,
-            taxaErro = validarTaxa(texto),
-            resultado = null
-        )
+        updateState { s ->
+            s.copy(
+                taxaText = texto,
+                taxaErro = validarTaxa(texto),
+                resultado = null
+            )
+        }
     }
 
     fun onMesesChange(novo: String) {
         val texto = novo.filter { it.isDigit() }
-        uiState = uiState.copy(
-            mesesText = texto,
-            mesesErro = validarMeses(texto),
-            resultado = null
-        )
+        updateState { s ->
+            s.copy(
+                mesesText = texto,
+                mesesErro = validarMeses(texto),
+                resultado = null
+            )
+        }
     }
-
 
     fun limpar() {
         uiState = SimulacaoUiState()
     }
 
-
     fun simular() {
-        // Revalidar tudo antes de simular
+        // Revalidar tudo antes de simular (garante consistência mesmo que chamem simular() direto)
         val montanteErro = validarMontante(uiState.montanteText)
         val taxaErro = validarTaxa(uiState.taxaText)
         val mesesErro = validarMeses(uiState.mesesText)
 
-        uiState = uiState.copy(
-            montanteErro = montanteErro,
-            taxaErro = taxaErro,
-            mesesErro = mesesErro,
-            resultado = null
-        )
+        updateState { s ->
+            s.copy(
+                montanteErro = montanteErro,
+                taxaErro = taxaErro,
+                mesesErro = mesesErro,
+                resultado = null
+            )
+        }
 
         if (montanteErro != null || taxaErro != null || mesesErro != null) return
+        if (!uiState.podeSimular) return
 
-        val montante = uiState.montanteText.toDouble()
-        val taxa = uiState.taxaText.toDouble()
-        val meses = uiState.mesesText.toInt()
+        val montante = uiState.montanteText.toDoubleOrNull() ?: return
+        val taxa = uiState.taxaText.toDoubleOrNull() ?: return
+        val meses = uiState.mesesText.toIntOrNull() ?: return
 
-        uiState = try {
-            uiState.copy(
-                resultado = CalculoEmprestimo.calcular(
-                    montante = montante,
-                    taxaAnual = taxa,
-                    meses = meses
-                )
+        try {
+            val resultado = CalculoEmprestimo.calcular(
+                montante = montante,
+                taxaAnual = taxa,
+                meses = meses
             )
+
+            updateState { s -> s.copy(resultado = resultado) }
         } catch (e: IllegalArgumentException) {
-            // Se a lógica do domínio lançar erro, distribuímos de forma genérica
-            uiState.copy(
-                montanteErro = uiState.montanteErro,
-                taxaErro = uiState.taxaErro,
-                mesesErro = uiState.mesesErro
-            )
+            // Se quiseres ser ainda mais profissional:
+            // adiciona "val erroGeral: String? = null" ao SimulacaoUiState
+            // e aqui faz s.copy(erroGeral = e.message ?: "Não foi possível simular.")
+            // Por agora, só garantimos que não crasha e que o resultado fica limpo.
+            updateState { s -> s.copy(resultado = null) }
         }
     }
 
@@ -93,7 +104,6 @@ class SimulacaoViewModel : ViewModel() {
         if (texto.isBlank()) return "Obrigatório."
         val v = texto.toDoubleOrNull() ?: return "Valor inválido."
         if (v <= 0.0) return "Tem de ser maior que 0."
-        // opcional: limitações realistas
         if (v > 200.0) return "Taxa demasiado alta."
         return null
     }

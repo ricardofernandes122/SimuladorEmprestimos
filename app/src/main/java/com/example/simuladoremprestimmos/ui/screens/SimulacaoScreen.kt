@@ -146,21 +146,44 @@ private fun SimulacaoContent(
             Text("Limpar")
         }
 
-        state.resultado?.let {
+        // ✅ Resultado com detalhes do cálculo
+        state.resultado?.let { res ->
             Spacer(modifier = Modifier.height(8.dp))
-            ResultadoCard(resultado = it)
+            ResultadoCard(
+                resultado = res,
+                montante = state.montanteText.toDoubleOrNull() ?: 0.0,
+                taxaAnual = state.taxaText.toDoubleOrNull() ?: 0.0,
+                meses = state.mesesText.toIntOrNull() ?: 0
+            )
         }
     }
 }
 
 @Composable
-private fun ResultadoCard(resultado: ResultadoEmprestimo) {
+private fun ResultadoCard(
+    resultado: ResultadoEmprestimo,
+    montante: Double,
+    taxaAnual: Double,
+    meses: Int
+) {
+    val taxaMensal = taxaAnual / 12.0
+
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Text("Resultado", style = MaterialTheme.typography.titleMedium)
+
+            // ✅ Detalhes do pedido (académico/profissional)
+            Text("Montante: ${formatEuro(montante)}")
+            Text("Taxa anual: ${formatPercent(taxaAnual)}")
+            Text("Prazo: $meses meses")
+            Text("Taxa mensal (aprox.): ${formatPercent(taxaMensal)}")
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // ✅ Resultado do cálculo
             Text("Prestação mensal: ${formatEuro(resultado.prestacaoMensal)}")
             Text("Total pago: ${formatEuro(resultado.totalPago)}")
             Text("Total de juros: ${formatEuro(resultado.totalJuros)}")
@@ -209,3 +232,6 @@ private fun SimulacaoScreenPreviewComResultado() {
 
 private fun formatEuro(valor: Double): String =
     String.format(Locale.getDefault(), "%.2f €", valor)
+
+private fun formatPercent(valor: Double): String =
+    String.format(Locale.getDefault(), "%.3f %%", valor)
