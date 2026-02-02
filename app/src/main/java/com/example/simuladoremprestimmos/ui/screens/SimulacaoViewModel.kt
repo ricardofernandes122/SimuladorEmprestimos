@@ -39,6 +39,12 @@ class SimulacaoViewModel : ViewModel() {
         )
     }
 
+
+    fun limpar() {
+        uiState = SimulacaoUiState()
+    }
+
+
     fun simular() {
         // Revalidar tudo antes de simular
         val montanteErro = validarMontante(uiState.montanteText)
