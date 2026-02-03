@@ -196,9 +196,13 @@ private fun ResultadoCard(
     taxaAnual: Double,
     meses: Int,
     detalheTaxa: String?
-)
- {
-    val taxaMensal = taxaAnual / 12.0
+) {
+    // coerente com o CalculoEmprestimo:
+    // i = (taxaAnual/100)/12  -> decimal
+    // para mostrar em percentagem: i*100
+
+    val i = (taxaAnual / 100.0) / 12.0
+    val taxaMensalPercent = i * 100.0
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -228,7 +232,7 @@ private fun ResultadoCard(
             }
 
             InfoRow("Prazo", "$meses meses")
-            InfoRow("Taxa mensal (aprox.)", formatPercent(taxaMensal))
+            InfoRow("Taxa mensal (aprox.)", formatPercent(taxaMensalPercent))
 
             HorizontalDivider()
 
@@ -239,6 +243,9 @@ private fun ResultadoCard(
         }
     }
 }
+
+
+
 
 @Composable
 private fun InfoRow(label: String, value: String) {
