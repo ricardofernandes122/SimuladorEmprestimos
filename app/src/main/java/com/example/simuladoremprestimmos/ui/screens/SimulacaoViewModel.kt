@@ -67,10 +67,10 @@ class SimulacaoViewModel : ViewModel() {
     }
 
     fun simular() {
-        // Revalidar tudo antes de simular
         val montanteErro = validarMontante(uiState.montanteText)
         val mesesErro = validarMeses(uiState.mesesText)
 
+        // Atualiza erros e limpa resultado se inválido
         updateState { s ->
             s.copy(
                 montanteErro = montanteErro,
@@ -82,11 +82,10 @@ class SimulacaoViewModel : ViewModel() {
             )
         }
 
-
         if (montanteErro != null || mesesErro != null) return
         if (!uiState.podeSimular) return
 
-        val montante = uiState.montanteText.toDoubleOrNull() ?: return
+        val montante = uiState.montanteText.replace(',', '.').toDoubleOrNull() ?: return
         val meses = uiState.mesesText.toIntOrNull() ?: return
 
         val (taxa, detalheTaxa) = calcularTaxaAnual(montante, meses)
@@ -101,17 +100,21 @@ class SimulacaoViewModel : ViewModel() {
             s.copy(
                 taxaCalculada = taxa,
                 detalheTaxa = detalheTaxa,
-                mostrarDetalheTaxa = false, // começa fechado
+                mostrarDetalheTaxa = false,
                 resultado = resultado
             )
         }
 
-    }
+
+
+}
 
     /**
-     * Modelo simples e realista:
-     * taxaFinal = taxaBase + ajusteMontante + ajustePrazo
+     * A taxa é calculada no ViewModel por se tratar de uma regra de negócio
+     * dependente do contexto da simulação (montante e prazo),
+     * enquanto o CalculoEmprestimo se limita a cálculos matemáticos puros.
      */
+
     private fun calcularTaxaAnual(montante: Double, meses: Int): Pair<Double, String> {
         val taxaBase = 6.0
 
@@ -146,7 +149,9 @@ class SimulacaoViewModel : ViewModel() {
 
         // aceitar apenas dígitos e no máximo 1 ponto, com até 2 casas decimais
         val regex = Regex("^\\d+(\\.\\d{0,2})?$")
-        if (!regex.matches(normalizado)) return "Use até 2 casas decimais."
+        if (!regex.matches(normalizado))
+            return "Use apenas números (até 2 casas decimais)."
+
 
         val v = normalizado.toDoubleOrNull() ?: return "Valor inválido."
         if (v <= 0.0) return "Tem de ser maior que 0."
