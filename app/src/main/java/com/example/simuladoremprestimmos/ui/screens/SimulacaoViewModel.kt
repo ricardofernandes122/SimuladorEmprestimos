@@ -24,7 +24,9 @@ class SimulacaoViewModel : ViewModel() {
                 montanteText = texto,
                 montanteErro = validarMontante(texto),
                 resultado = null,
-                taxaCalculada = null
+                taxaCalculada = null,
+                detalheTaxa = null,
+                mostrarDetalheTaxa = false
             )
         }
     }
@@ -36,10 +38,13 @@ class SimulacaoViewModel : ViewModel() {
                 mesesText = texto,
                 mesesErro = validarMeses(texto),
                 resultado = null,
-                taxaCalculada = null
+                taxaCalculada = null,
+                detalheTaxa = null,
+                mostrarDetalheTaxa = false
             )
         }
     }
+
 
     fun limpar() {
         uiState = SimulacaoUiState()
@@ -55,9 +60,12 @@ class SimulacaoViewModel : ViewModel() {
                 montanteErro = montanteErro,
                 mesesErro = mesesErro,
                 resultado = null,
-                taxaCalculada = null
+                taxaCalculada = null,
+                detalheTaxa = null,
+                mostrarDetalheTaxa = false
             )
         }
+
 
         if (montanteErro != null || mesesErro != null) return
         if (!uiState.podeSimular) return
@@ -65,32 +73,30 @@ class SimulacaoViewModel : ViewModel() {
         val montante = uiState.montanteText.toDoubleOrNull() ?: return
         val meses = uiState.mesesText.toIntOrNull() ?: return
 
-        // ✅ Taxa calculada automaticamente (modelo "banco-like")
-        val taxa = calcularTaxaAnual(montante, meses)
+        val (taxa, detalheTaxa) = calcularTaxaAnual(montante, meses)
 
-        try {
-            val resultado = CalculoEmprestimo.calcular(
-                montante = montante,
-                taxaAnual = taxa,
-                meses = meses
+        val resultado = CalculoEmprestimo.calcular(
+            montante = montante,
+            taxaAnual = taxa,
+            meses = meses
+        )
+
+        updateState { s ->
+            s.copy(
+                taxaCalculada = taxa,
+                detalheTaxa = detalheTaxa,
+                mostrarDetalheTaxa = false, // começa fechado
+                resultado = resultado
             )
-
-            updateState { s ->
-                s.copy(
-                    taxaCalculada = taxa,
-                    resultado = resultado
-                )
-            }
-        } catch (e: IllegalArgumentException) {
-            updateState { s -> s.copy(resultado = null, taxaCalculada = null) }
         }
+
     }
 
     /**
      * Modelo simples e realista:
      * taxaFinal = taxaBase + ajusteMontante + ajustePrazo
      */
-    private fun calcularTaxaAnual(montante: Double, meses: Int): Double {
+    private fun calcularTaxaAnual(montante: Double, meses: Int): Pair<Double, String> {
         val taxaBase = 6.0
 
         val ajusteMontante = when {
@@ -105,8 +111,16 @@ class SimulacaoViewModel : ViewModel() {
             else -> 3.0
         }
 
-        return taxaBase + ajusteMontante + ajustePrazo
+        val taxaFinal = taxaBase + ajusteMontante + ajustePrazo
+
+        val detalhe = "Taxa base: ${taxaBase}%\n" +
+                "Ajuste montante: +${ajusteMontante}%\n" +
+                "Ajuste prazo: +${ajustePrazo}%"
+
+
+        return Pair(taxaFinal, detalhe)
     }
+
 
     private fun validarMontante(texto: String): String? {
         val t = texto.trim()
@@ -126,6 +140,7 @@ class SimulacaoViewModel : ViewModel() {
 
         return null
     }
+
 
     private fun validarMeses(texto: String): String? {
         if (texto.isBlank()) return "Obrigatório."

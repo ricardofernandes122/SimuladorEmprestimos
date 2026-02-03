@@ -181,19 +181,24 @@ private fun SimulacaoContent(
                 resultado = res,
                 montante = state.montanteText.toDoubleOrNull() ?: 0.0,
                 taxaAnual = state.taxaCalculada ?: 0.0,
-                meses = state.mesesText.toIntOrNull() ?: 0
+                meses = state.mesesText.toIntOrNull() ?: 0,
+                detalheTaxa = state.detalheTaxa
             )
+
         }
     }
 }
 
 @Composable
+
 private fun ResultadoCard(
     resultado: ResultadoEmprestimo,
     montante: Double,
     taxaAnual: Double,
-    meses: Int
-) {
+    meses: Int,
+    detalheTaxa: String?
+)
+ {
     val taxaMensal = taxaAnual / 12.0
 
     Card(
@@ -214,6 +219,15 @@ private fun ResultadoCard(
             Text("Resumo do pedido", style = MaterialTheme.typography.labelLarge)
             InfoRow("Montante", formatEuro(montante))
             InfoRow("Taxa anual (estimada)", formatPercent(taxaAnual))
+
+            detalheTaxa?.let { detalhe ->
+                Text(
+                    detalhe,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
             InfoRow("Prazo", "$meses meses")
             InfoRow("Taxa mensal (aprox.)", formatPercent(taxaMensal))
 
