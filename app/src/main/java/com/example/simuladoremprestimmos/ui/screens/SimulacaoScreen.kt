@@ -117,7 +117,6 @@ private fun SimulacaoContent(
                     )
                 }
 
-                // ✅ REMOVIDO: Campo Taxa (agora é calculada automaticamente)
 
                 OutlinedTextField(
                     value = state.mesesText,

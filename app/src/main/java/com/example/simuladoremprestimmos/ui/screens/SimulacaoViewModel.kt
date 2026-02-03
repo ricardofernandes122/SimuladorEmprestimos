@@ -127,26 +127,28 @@ class SimulacaoViewModel : ViewModel() {
         if (t.isBlank()) return "Obrigatório."
 
         val normalizado = t.replace(',', '.')
-
-        // Aceita só dígitos e no máximo 1 separador decimal e até 2 casas decimais
-        val regex = Regex("^\\d+(\\.\\d{0,2})?$")
-        if (!regex.matches(normalizado)) return "Use até 2 casas decimais."
-
         val v = normalizado.toDoubleOrNull() ?: return "Valor inválido."
         if (v <= 0.0) return "Tem de ser maior que 0."
 
-        // (opcional) limites realistas
-        if (v > 1_000_000.0) return "Montante demasiado alto (máx. 1 000 000€)."
+        // Montante minimo e maximo para crédito pessoal
+        if (v < 500.0) return "Montante mínimo para crédito pessoal: 500€."
+        if (v > 75_000.0) return "Montante acima do habitual para crédito pessoal."
 
         return null
     }
+
 
 
     private fun validarMeses(texto: String): String? {
         if (texto.isBlank()) return "Obrigatório."
+
         val v = texto.toIntOrNull() ?: return "Valor inválido."
-        if (v <= 0) return "Tem de ser pelo menos 1."
-        if (v > 600) return "Prazo demasiado longo."
+        if (v <= 0) return "Tem de ser pelo menos 1 mês."
+
+        // Prazo máximo para crédito pessoal
+        if (v > 84) return "Prazo acima do habitual para crédito pessoal (máx. 84 meses)."
+
         return null
     }
+
 }
