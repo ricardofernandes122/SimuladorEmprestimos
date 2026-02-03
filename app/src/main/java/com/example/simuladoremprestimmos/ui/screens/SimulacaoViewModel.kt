@@ -23,18 +23,8 @@ class SimulacaoViewModel : ViewModel() {
             s.copy(
                 montanteText = texto,
                 montanteErro = validarMontante(texto),
-                resultado = null
-            )
-        }
-    }
-
-    fun onTaxaChange(novo: String) {
-        val texto = novo.replace(',', '.')
-        updateState { s ->
-            s.copy(
-                taxaText = texto,
-                taxaErro = validarTaxa(texto),
-                resultado = null
+                resultado = null,
+                taxaCalculada = null
             )
         }
     }
@@ -45,7 +35,8 @@ class SimulacaoViewModel : ViewModel() {
             s.copy(
                 mesesText = texto,
                 mesesErro = validarMeses(texto),
-                resultado = null
+                resultado = null,
+                taxaCalculada = null
             )
         }
     }
@@ -55,26 +46,27 @@ class SimulacaoViewModel : ViewModel() {
     }
 
     fun simular() {
-        // Revalidar tudo antes de simular (garante consistência mesmo que chamem simular() direto)
+        // Revalidar tudo antes de simular
         val montanteErro = validarMontante(uiState.montanteText)
-        val taxaErro = validarTaxa(uiState.taxaText)
         val mesesErro = validarMeses(uiState.mesesText)
 
         updateState { s ->
             s.copy(
                 montanteErro = montanteErro,
-                taxaErro = taxaErro,
                 mesesErro = mesesErro,
-                resultado = null
+                resultado = null,
+                taxaCalculada = null
             )
         }
 
-        if (montanteErro != null || taxaErro != null || mesesErro != null) return
+        if (montanteErro != null || mesesErro != null) return
         if (!uiState.podeSimular) return
 
         val montante = uiState.montanteText.toDoubleOrNull() ?: return
-        val taxa = uiState.taxaText.toDoubleOrNull() ?: return
         val meses = uiState.mesesText.toIntOrNull() ?: return
+
+        // ✅ Taxa calculada automaticamente (modelo "banco-like")
+        val taxa = calcularTaxaAnual(montante, meses)
 
         try {
             val resultado = CalculoEmprestimo.calcular(
@@ -83,21 +75,43 @@ class SimulacaoViewModel : ViewModel() {
                 meses = meses
             )
 
-            updateState { s -> s.copy(resultado = resultado) }
+            updateState { s ->
+                s.copy(
+                    taxaCalculada = taxa,
+                    resultado = resultado
+                )
+            }
         } catch (e: IllegalArgumentException) {
-            // Se quiseres ser ainda mais profissional:
-            // adiciona "val erroGeral: String? = null" ao SimulacaoUiState
-            // e aqui faz s.copy(erroGeral = e.message ?: "Não foi possível simular.")
-            // Por agora, só garantimos que não crasha e que o resultado fica limpo.
-            updateState { s -> s.copy(resultado = null) }
+            updateState { s -> s.copy(resultado = null, taxaCalculada = null) }
         }
+    }
+
+    /**
+     * Modelo simples e realista:
+     * taxaFinal = taxaBase + ajusteMontante + ajustePrazo
+     */
+    private fun calcularTaxaAnual(montante: Double, meses: Int): Double {
+        val taxaBase = 6.0
+
+        val ajusteMontante = when {
+            montante < 5_000.0 -> 3.0
+            montante <= 15_000.0 -> 2.0
+            else -> 1.0
+        }
+
+        val ajustePrazo = when {
+            meses <= 24 -> 1.0
+            meses <= 60 -> 2.0
+            else -> 3.0
+        }
+
+        return taxaBase + ajusteMontante + ajustePrazo
     }
 
     private fun validarMontante(texto: String): String? {
         val t = texto.trim()
         if (t.isBlank()) return "Obrigatório."
 
-        // Permite o utilizador escrever com vírgula (PT) ou ponto
         val normalizado = t.replace(',', '.')
 
         // Aceita só dígitos e no máximo 1 separador decimal e até 2 casas decimais
@@ -112,16 +126,6 @@ class SimulacaoViewModel : ViewModel() {
 
         return null
     }
-
-
-    private fun validarTaxa(texto: String): String? {
-        if (texto.isBlank()) return "Obrigatório."
-        val v = texto.toDoubleOrNull() ?: return "Valor inválido."
-        if (v <= 0.0) return "Tem de ser maior que 0."
-        if (v > 50.0) return "Taxa anual demasiado alta (máx. 50%)."
-        return null
-    }
-
 
     private fun validarMeses(texto: String): String? {
         if (texto.isBlank()) return "Obrigatório."

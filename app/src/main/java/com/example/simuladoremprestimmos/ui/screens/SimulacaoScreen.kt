@@ -1,7 +1,5 @@
 package com.example.simuladoremprestimmos.ui.screens
 
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -10,9 +8,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -47,7 +47,6 @@ fun SimulacaoScreen(
         modifier = modifier,
         state = state,
         onMontanteChange = vm::onMontanteChange,
-        onTaxaChange = vm::onTaxaChange,
         onMesesChange = vm::onMesesChange,
         onLimpar = vm::limpar,
         onSimular = vm::simular
@@ -59,7 +58,6 @@ private fun SimulacaoContent(
     modifier: Modifier = Modifier,
     state: SimulacaoUiState,
     onMontanteChange: (String) -> Unit,
-    onTaxaChange: (String) -> Unit,
     onMesesChange: (String) -> Unit,
     onLimpar: () -> Unit,
     onSimular: () -> Unit
@@ -72,13 +70,12 @@ private fun SimulacaoContent(
             .padding(16.dp)
             .verticalScroll(scrollState),
         verticalArrangement = Arrangement.spacedBy(14.dp)
-    )  {
+    ) {
         Text(
             "Simulador de Empréstimos",
             style = MaterialTheme.typography.headlineMedium
         )
 
-        // ✅ Card branco + borda fina (profissional)
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
@@ -120,28 +117,7 @@ private fun SimulacaoContent(
                     )
                 }
 
-                OutlinedTextField(
-                    value = state.taxaText,
-                    onValueChange = onTaxaChange,
-                    label = { Text("Taxa anual (%)") },
-                    modifier = Modifier.fillMaxWidth(),
-                    isError = state.taxaErro != null,
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Number,
-                        imeAction = ImeAction.Next
-                    ),
-                    keyboardActions = KeyboardActions(
-                        onNext = { focusManager.moveFocus(FocusDirection.Down) }
-                    )
-                )
-                state.taxaErro?.let {
-                    Text(
-                        it,
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
+                // ✅ REMOVIDO: Campo Taxa (agora é calculada automaticamente)
 
                 OutlinedTextField(
                     value = state.mesesText,
@@ -171,7 +147,6 @@ private fun SimulacaoContent(
             }
         }
 
-        // ✅ Botão principal
         Button(
             onClick = {
                 focusManager.clearFocus()
@@ -187,7 +162,6 @@ private fun SimulacaoContent(
             Text("Simular", style = MaterialTheme.typography.titleSmall)
         }
 
-        // ✅ Botão secundário
         OutlinedButton(
             onClick = {
                 focusManager.clearFocus()
@@ -201,13 +175,12 @@ private fun SimulacaoContent(
             Text("Limpar", style = MaterialTheme.typography.titleSmall)
         }
 
-        // ✅ Resultado
         state.resultado?.let { res ->
             Spacer(modifier = Modifier.height(4.dp))
             ResultadoCard(
                 resultado = res,
                 montante = state.montanteText.toDoubleOrNull() ?: 0.0,
-                taxaAnual = state.taxaText.toDoubleOrNull() ?: 0.0,
+                taxaAnual = state.taxaCalculada ?: 0.0,
                 meses = state.mesesText.toIntOrNull() ?: 0
             )
         }
@@ -240,7 +213,7 @@ private fun ResultadoCard(
 
             Text("Resumo do pedido", style = MaterialTheme.typography.labelLarge)
             InfoRow("Montante", formatEuro(montante))
-            InfoRow("Taxa anual", formatPercent(taxaAnual))
+            InfoRow("Taxa anual (estimada)", formatPercent(taxaAnual))
             InfoRow("Prazo", "$meses meses")
             InfoRow("Taxa mensal (aprox.)", formatPercent(taxaMensal))
 
@@ -274,7 +247,6 @@ private fun SimulacaoScreenPreviewVazio() {
         SimulacaoContent(
             state = SimulacaoUiState(),
             onMontanteChange = {},
-            onTaxaChange = {},
             onMesesChange = {},
             onLimpar = {},
             onSimular = {}
@@ -289,8 +261,8 @@ private fun SimulacaoScreenPreviewComResultado() {
         SimulacaoContent(
             state = SimulacaoUiState(
                 montanteText = "10000",
-                taxaText = "7.5",
                 mesesText = "60",
+                taxaCalculada = 10.0,
                 resultado = ResultadoEmprestimo(
                     prestacaoMensal = 200.00,
                     totalPago = 12000.00,
@@ -298,7 +270,6 @@ private fun SimulacaoScreenPreviewComResultado() {
                 )
             ),
             onMontanteChange = {},
-            onTaxaChange = {},
             onMesesChange = {},
             onLimpar = {},
             onSimular = {}
