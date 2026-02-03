@@ -18,11 +18,26 @@ class SimulacaoViewModel : ViewModel() {
     }
 
     fun onMontanteChange(novo: String) {
-        val texto = novo.replace(',', '.')
+        val normalizado = novo.replace(',', '.')
+
+        // aceita apenas dígitos e UM ponto decimal
+        val filtrado = buildString {
+            var jaTemPonto = false
+            for (c in normalizado) {
+                when {
+                    c.isDigit() -> append(c)
+                    c == '.' && !jaTemPonto -> {
+                        append(c)
+                        jaTemPonto = true
+                    }
+                }
+            }
+        }
+
         updateState { s ->
             s.copy(
-                montanteText = texto,
-                montanteErro = validarMontante(texto),
+                montanteText = filtrado,
+                montanteErro = validarMontante(filtrado),
                 resultado = null,
                 taxaCalculada = null,
                 detalheTaxa = null,
@@ -30,6 +45,7 @@ class SimulacaoViewModel : ViewModel() {
             )
         }
     }
+
 
     fun onMesesChange(novo: String) {
         val texto = novo.filter { it.isDigit() }
@@ -127,15 +143,21 @@ class SimulacaoViewModel : ViewModel() {
         if (t.isBlank()) return "Obrigatório."
 
         val normalizado = t.replace(',', '.')
+
+        // aceitar apenas dígitos e no máximo 1 ponto, com até 2 casas decimais
+        val regex = Regex("^\\d+(\\.\\d{0,2})?$")
+        if (!regex.matches(normalizado)) return "Use até 2 casas decimais."
+
         val v = normalizado.toDoubleOrNull() ?: return "Valor inválido."
         if (v <= 0.0) return "Tem de ser maior que 0."
 
-        // Montante minimo e maximo para crédito pessoal
+        // Montante mínimo e máximo para crédito pessoal
         if (v < 500.0) return "Montante mínimo para crédito pessoal: 500€."
-        if (v > 75_000.0) return "Montante acima do habitual para crédito pessoal."
+        if (v > 75_000.0) return "Montante máximo habitual para crédito pessoal: 75 000€."
 
         return null
     }
+
 
 
 
