@@ -1,5 +1,18 @@
 package com.example.simuladoremprestimmos.ui.screens
 
+import androidx.compose.ui.platform.LocalContext
+import android.widget.Toast
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.TextButton
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
@@ -35,7 +48,20 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.simuladoremprestimmos.domain.ResultadoEmprestimo
 import com.example.simuladoremprestimmos.ui.theme.SimuladorEmprestimmosTheme
 import com.example.simuladoremprestimmos.viewmodel.SimulacaoViewModel
+import android.content.ContentValues
+import android.content.Context
+import android.graphics.Paint
+import android.graphics.Typeface
+import android.graphics.pdf.PdfDocument
+import android.net.Uri
+import android.os.Build
+import android.provider.MediaStore
+import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
+
+
+
 
 @Composable
 fun SimulacaoScreen(
@@ -175,9 +201,40 @@ private fun SimulacaoContent(
             Text("Limpar", style = MaterialTheme.typography.titleSmall)
         }
 
+        val context = LocalContext.current
 
         state.resultado?.let { res ->
             Spacer(modifier = Modifier.height(4.dp))
+
+            OutlinedButton(
+                onClick = {
+                    val uri = exportarPdfEmprestimo(
+                        context = context,
+                        montante = state.montanteText.toDoubleOrNull() ?: 0.0,
+                        meses = state.mesesText.toIntOrNull() ?: 0,
+                        taxaAnual = state.taxaCalculada ?: 0.0,
+                        detalheTaxa = state.detalheTaxa,
+                        prestacao = res.prestacaoMensal,
+                        totalPago = res.totalPago,
+                        totalJuros = res.totalJuros
+                    )
+
+                    if (uri != null) {
+                        Toast.makeText(context, "PDF guardado em Downloads.", Toast.LENGTH_SHORT)
+                            .show()
+                    } else {
+                        Toast.makeText(context, "Erro a exportar PDF.", Toast.LENGTH_SHORT).show()
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                shape = RoundedCornerShape(14.dp),
+                enabled = true
+            ) {
+                Text("Exportar PDF", style = MaterialTheme.typography.titleSmall)
+            }
+
             ResultadoCard(
                 resultado = res,
                 montante = state.montanteText.toDoubleOrNull() ?: 0.0,
@@ -185,13 +242,11 @@ private fun SimulacaoContent(
                 meses = state.mesesText.toIntOrNull() ?: 0,
                 detalheTaxa = state.detalheTaxa
             )
-
         }
     }
+
 }
-
 @Composable
-
 private fun ResultadoCard(
     resultado: ResultadoEmprestimo,
     montante: Double,
@@ -199,9 +254,7 @@ private fun ResultadoCard(
     meses: Int,
     detalheTaxa: String?
 ) {
-    // coerente com o CalculoEmprestimo:
-    // i = (taxaAnual/100)/12  -> decimal
-    // para mostrar em percentagem: i*100
+    val mostrarInfoTaxa = remember { mutableStateOf(false) }
 
     val i = (taxaAnual / 100.0) / 12.0
     val taxaMensalPercent = i * 100.0
@@ -223,7 +276,35 @@ private fun ResultadoCard(
 
             Text("Resumo do pedido", style = MaterialTheme.typography.labelLarge)
             InfoRow("Montante", formatEuro(montante))
-            InfoRow("Taxa anual (estimada)", formatPercent(taxaAnual))
+
+            // 🔹 Taxa anual com ícone informativo
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        "Taxa anual (estimada)",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    IconButton(
+                        onClick = { mostrarInfoTaxa.value = true },
+                        modifier = Modifier.size(20.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = "Informação sobre a taxa",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+
+                Text(
+                    formatPercent(taxaAnual),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
 
             detalheTaxa?.let { detalhe ->
                 Text(
@@ -239,13 +320,46 @@ private fun ResultadoCard(
             HorizontalDivider()
 
             Text("Resumo financeiro", style = MaterialTheme.typography.labelLarge)
-            InfoRow("Prestação mensal", formatEuro(resultado.prestacaoMensal))
-            InfoRow("Total pago", formatEuro(resultado.totalPago))
-            InfoRow("Total de juros", formatEuro(resultado.totalJuros))
+
+            InfoRow(
+                "Prestação mensal",
+                formatEuro(resultado.prestacaoMensal),
+                highlight = true
+            )
+
+            InfoRow(
+                "Total pago",
+                formatEuro(resultado.totalPago),
+                highlight = true
+            )
+
+            InfoRow(
+                "Total de juros",
+                formatEuro(resultado.totalJuros)
+            )
         }
     }
-}
 
+    // 🔹 Diálogo informativo da taxa
+    if (mostrarInfoTaxa.value) {
+        AlertDialog(
+            onDismissRequest = { mostrarInfoTaxa.value = false },
+            title = { Text("Taxa anual estimada") },
+            text = {
+                Text(
+                    "A taxa apresentada é uma estimativa académica, calculada com base numa taxa base de 6% e ajustes em função do montante e do prazo.\n\n" +
+                            "Não corresponde a uma proposta contratual real."
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { mostrarInfoTaxa.value = false }) {
+                    Text("OK")
+                }
+            }
+        )
+    }
+
+}
 
 
 
@@ -311,6 +425,136 @@ private fun SimulacaoScreenPreviewComResultado() {
         )
     }
 }
+
+fun exportarPdfEmprestimo(
+    context: Context,
+    montante: Double,
+    meses: Int,
+    taxaAnual: Double,
+    detalheTaxa: String?,
+    prestacao: Double,
+    totalPago: Double,
+    totalJuros: Double
+): Uri? {
+    // 1) Criar PDF em memória
+    val pdf = PdfDocument()
+    val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create() // A4 aprox (pt)
+    val page = pdf.startPage(pageInfo)
+    val canvas = page.canvas
+
+    val paintTitle = Paint().apply {
+        isAntiAlias = true
+        typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+        textSize = 18f
+    }
+    val paintLabel = Paint().apply {
+        isAntiAlias = true
+        typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+        textSize = 12f
+    }
+    val paintText = Paint().apply {
+        isAntiAlias = true
+        typeface = Typeface.create(Typeface.DEFAULT, Typeface.NORMAL)
+        textSize = 12f
+    }
+
+    var y = 60f
+    val x = 40f
+    val line = 22f
+
+    fun drawPair(label: String, value: String) {
+        canvas.drawText(label, x, y, paintLabel)
+        canvas.drawText(value, x + 220f, y, paintText)
+        y += line
+    }
+
+    val dataHora = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(Date())
+
+    canvas.drawText("Simulador de Crédito Pessoal - Resultado", x, y, paintTitle)
+    y += 2 * line
+    canvas.drawText("Gerado em: $dataHora", x, y, paintText)
+    y += 2 * line
+
+    drawPair("Montante:", formatEuroPt(montante))
+    drawPair("Prazo:", "$meses meses")
+    drawPair("Taxa anual (estimada):", formatPercentPt(taxaAnual))
+    y += line / 2
+
+    detalheTaxa?.let {
+        canvas.drawText("Detalhe da taxa:", x, y, paintLabel); y += line
+        // quebra simples por linhas
+        it.lines().forEach { ln ->
+            canvas.drawText(ln, x, y, paintText)
+            y += line
+        }
+        y += line / 2
+    }
+
+    y += line / 2
+    canvas.drawText("Resumo financeiro", x, y, paintLabel)
+    y += line
+
+    drawPair("Prestação mensal:", formatEuroPt(prestacao))
+    drawPair("Total pago:", formatEuroPt(totalPago))
+    drawPair("Total de juros:", formatEuroPt(totalJuros))
+
+    y += 2 * line
+    canvas.drawText(
+        "Nota: Valores com fins académicos. Não constitui proposta contratual.",
+        x, y, paintText
+    )
+
+    pdf.finishPage(page)
+
+    // 2) Guardar em Downloads (MediaStore)
+    val resolver = context.contentResolver
+
+    val fileName = "Simulacao_Emprestimo_${System.currentTimeMillis()}.pdf"
+    val values = ContentValues().apply {
+        put(MediaStore.Downloads.DISPLAY_NAME, fileName)
+        put(MediaStore.Downloads.MIME_TYPE, "application/pdf")
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            put(MediaStore.Downloads.IS_PENDING, 1)
+        }
+    }
+
+    val uri = resolver.insert(
+        MediaStore.Files.getContentUri("external"),
+        values
+    ) ?: run {
+        pdf.close()
+        return null
+    }
+
+
+    return try {
+        resolver.openOutputStream(uri)?.use { out ->
+            pdf.writeTo(out)
+        } ?: run {
+            pdf.close()
+            return null
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            values.clear()
+            values.put(MediaStore.Downloads.IS_PENDING, 0)
+            resolver.update(uri, values, null, null)
+        }
+
+        pdf.close()
+        uri
+    } catch (e: Exception) {
+        pdf.close()
+        // tenta apagar o ficheiro incompleto
+        runCatching { resolver.delete(uri, null, null) }
+        null
+    }
+}
+private fun formatEuroPt(valor: Double): String =
+    String.format(Locale("pt", "PT"), "%.2f €", valor)
+
+private fun formatPercentPt(valor: Double): String =
+    String.format(Locale("pt", "PT"), "%.3f %%", valor)
 
 private fun formatEuro(valor: Double): String =
     String.format(Locale.getDefault(), "%.2f €", valor)

@@ -40,14 +40,14 @@ dos simuladores bancários, não substituindo a análise real efetuada pelas ins
 ## Arquitetura
 O projeto segue uma separação clara de responsabilidades, de acordo com o padrão MVVM:
 
-- **UI (Jetpack Compose)**  
+- UI (Jetpack Compose)  
   Responsável apenas pela apresentação dos dados e interação com o utilizador.
 
-- **ViewModel**  
+- ViewModel  
   Gere o estado da aplicação, valida os dados introduzidos, aplica as regras do domínio
   do problema e coordena o cálculo da simulação.
 
-- **Domínio**  
+- Domínio 
   Contém a lógica de cálculo financeiro do empréstimo, incluindo o cálculo da prestação,
   total pago e total de juros, de forma independente da interface.
 
@@ -63,9 +63,13 @@ Os testes cobrem:
 - Casos inválidos (valores negativos ou nulos)
 - Comportamento do cálculo face à variação da taxa e do prazo
 
-Os testes seguem a estrutura **AAA (Arrange, Act, Assert)**,
+Os testes seguem a estrutura AAA (Arrange, Act, Assert)
 garantindo clareza e fiabilidade na validação da lógica de negócio.
+
+## Funcionalidade extra
+Exportação dos resultados da simulação para PDF, armazenado no sistema Android.
 
 ## Notas
 Apesar de procurar aproximar-se da realidade, este simulador tem fins exclusivamente
 académicos e não representa uma proposta contratual real.
+
