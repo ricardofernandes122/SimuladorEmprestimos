@@ -170,12 +170,13 @@ class SimulacaoViewModel : ViewModel() {
         if (texto.isBlank()) return "Obrigatório."
 
         val v = texto.toIntOrNull() ?: return "Valor inválido."
-        if (v <= 0) return "Tem de ser pelo menos 1 mês."
 
-        // Prazo máximo para crédito pessoal
-        if (v > 84) return "Prazo acima do habitual para crédito pessoal (máx. 84 meses)."
+        // Prazo mínimo e máximo para crédito pessoal
+        if (v < 12) return "O prazo mínimo é 12 meses."
+        if (v > 84) return "O prazo máximo é 84 meses."
 
         return null
     }
+
 
 }

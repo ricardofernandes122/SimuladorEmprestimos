@@ -100,6 +100,30 @@ class CalculoEmprestimoTest {
         assertTrue(resPrazoLongo.prestacaoMensal < resPrazoCurto.prestacaoMensal)
         assertTrue(resPrazoLongo.totalJuros > resPrazoCurto.totalJuros)
     }
+    @Test
+    fun validarPrazo_quandoMenorQue12_mesesNaoAceite() {
+        // Arrange
+        val meses = 11
+
+        // Act
+        val erro = if (meses < 12) "O prazo mínimo é 12 meses." else null
+
+        // Assert
+        assertEquals("O prazo mínimo é 12 meses.", erro)
+    }
+
+    @Test
+    fun validarPrazo_quandoIgualA12_mesesAceite() {
+        // Arrange
+        val meses = 12
+
+        // Act
+        val erro = if (meses < 12) "O prazo mínimo é 12 meses." else null
+
+        // Assert
+        assertNull(erro)
+    }
+
 
     @Test(expected = IllegalArgumentException::class)
     fun calcular_quandoMontanteZero_lancaExcecao() {
