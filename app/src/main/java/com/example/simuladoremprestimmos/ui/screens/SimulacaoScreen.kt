@@ -1,5 +1,6 @@
 package com.example.simuladoremprestimmos.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -65,8 +66,15 @@ private fun SimulacaoContent(
     val focusManager = LocalFocusManager.current
     val scrollState = rememberScrollState()
 
+    val podeLimpar =
+        state.montanteText.isNotBlank() ||
+                state.mesesText.isNotBlank() ||
+                state.resultado != null
+
+
     Column(
         modifier = modifier
+            .background(MaterialTheme.colorScheme.background)
             .padding(16.dp)
             .verticalScroll(scrollState),
         verticalArrangement = Arrangement.spacedBy(14.dp)
@@ -101,6 +109,9 @@ private fun SimulacaoContent(
                     modifier = Modifier.fillMaxWidth(),
                     isError = state.montanteErro != null,
                     singleLine = true,
+                    supportingText = if (state.montanteErro != null) {
+                        { Text(state.montanteErro!!) }
+                    } else null,
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Number,
                         imeAction = ImeAction.Next
@@ -109,14 +120,6 @@ private fun SimulacaoContent(
                         onNext = { focusManager.moveFocus(FocusDirection.Down) }
                     )
                 )
-                state.montanteErro?.let {
-                    Text(
-                        it,
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-
 
                 OutlinedTextField(
                     value = state.mesesText,
@@ -125,6 +128,9 @@ private fun SimulacaoContent(
                     modifier = Modifier.fillMaxWidth(),
                     isError = state.mesesErro != null,
                     singleLine = true,
+                    supportingText = if (state.mesesErro != null) {
+                        { Text(state.mesesErro!!) }
+                    } else null,
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Number,
                         imeAction = ImeAction.Done
@@ -136,13 +142,7 @@ private fun SimulacaoContent(
                         }
                     )
                 )
-                state.mesesErro?.let {
-                    Text(
-                        it,
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
+
             }
         }
 
@@ -169,10 +169,12 @@ private fun SimulacaoContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(52.dp),
-            shape = RoundedCornerShape(14.dp)
+            shape = RoundedCornerShape(14.dp),
+            enabled = podeLimpar
         ) {
             Text("Limpar", style = MaterialTheme.typography.titleSmall)
         }
+
 
         state.resultado?.let { res ->
             Spacer(modifier = Modifier.height(4.dp))
@@ -248,7 +250,19 @@ private fun ResultadoCard(
 
 
 @Composable
-private fun InfoRow(label: String, value: String) {
+private fun InfoRow(
+    label: String,
+    value: String,
+    highlight: Boolean = false
+) {
+    val valueStyle =
+        if (highlight)
+            MaterialTheme.typography.bodyMedium.copy(
+                fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold
+            )
+        else
+            MaterialTheme.typography.bodyMedium
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -256,9 +270,10 @@ private fun InfoRow(label: String, value: String) {
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(label, style = MaterialTheme.typography.bodyMedium)
-        Text(value, style = MaterialTheme.typography.bodyMedium)
+        Text(value, style = valueStyle)
     }
 }
+
 
 @Preview(showBackground = true)
 @Composable
