@@ -19,7 +19,7 @@ com base no montante pretendido e no prazo escolhido.
 O simulador representa um crédito pessoal standard, caracterizado por:
 - Empréstimo sem garantia real
 - Taxa de juro fixa durante toda a duração do empréstimo
-- Prazos para credito pessoal de 12/18 meses (mínimo) até 84 meses (máximo)
+- Prazos para credito pessoal de 12 meses (mínimo) até 84 meses (máximo)
 - Montantes típicos de crédito pessoal entre 500€ e 75 000€
 
 Valores fora destes intervalos são rejeitados por não se enquadrarem no domínio definido para crédito pessoal.

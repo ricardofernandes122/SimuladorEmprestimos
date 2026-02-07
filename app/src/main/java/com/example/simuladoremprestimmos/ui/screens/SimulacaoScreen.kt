@@ -1,53 +1,5 @@
 package com.example.simuladoremprestimmos.ui.screens
 
-import androidx.compose.ui.platform.LocalContext
-import android.widget.Toast
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.TextButton
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.foundation.layout.size
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.background
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusDirection
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.simuladoremprestimmos.domain.ResultadoEmprestimo
-import com.example.simuladoremprestimmos.ui.theme.SimuladorEmprestimmosTheme
-import com.example.simuladoremprestimmos.viewmodel.SimulacaoViewModel
 import android.content.ContentValues
 import android.content.Context
 import android.graphics.Paint
@@ -56,11 +8,60 @@ import android.graphics.pdf.PdfDocument
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
+import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.simuladoremprestimmos.R
+import com.example.simuladoremprestimmos.domain.ResultadoEmprestimo
+import com.example.simuladoremprestimmos.ui.theme.SimuladorEmprestimmosTheme
+import com.example.simuladoremprestimmos.viewmodel.SimulacaoViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-
-
 
 
 @Composable
@@ -136,7 +137,7 @@ private fun SimulacaoContent(
                     isError = state.montanteErro != null,
                     singleLine = true,
                     supportingText = if (state.montanteErro != null) {
-                        { Text(state.montanteErro!!) }
+                        { Text(state.montanteErro) }
                     } else null,
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Number,
@@ -155,7 +156,7 @@ private fun SimulacaoContent(
                     isError = state.mesesErro != null,
                     singleLine = true,
                     supportingText = if (state.mesesErro != null) {
-                        { Text(state.mesesErro!!) }
+                        { Text(state.mesesErro) }
                     } else null,
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Number,
@@ -277,7 +278,7 @@ private fun ResultadoCard(
             Text("Resumo do pedido", style = MaterialTheme.typography.labelLarge)
             InfoRow("Montante", formatEuro(montante))
 
-            // 🔹 Taxa anual com ícone informativo
+            // Taxa anual com ícone informativo
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -340,16 +341,41 @@ private fun ResultadoCard(
         }
     }
 
-    // 🔹 Diálogo informativo da taxa
+    //  Diálogo informativo da taxa
     if (mostrarInfoTaxa.value) {
         AlertDialog(
             onDismissRequest = { mostrarInfoTaxa.value = false },
-            title = { Text("Taxa anual estimada") },
+            title = {
+                Text(text = "Taxa anual estimada")
+            },
             text = {
-                Text(
-                    "A taxa apresentada é uma estimativa académica, calculada com base numa taxa base de 6% e ajustes em função do montante e do prazo.\n\n" +
-                            "Não corresponde a uma proposta contratual real."
-                )
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
+                ) {
+
+                    Image(
+                        painter = painterResource(id = R.drawable.imagem),
+                        contentDescription = "Ilustração da taxa anual",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(120.dp),
+                        contentScale = ContentScale.Fit
+                    )
+
+                    // Texto principal
+                    Text(
+                        text = "A taxa apresentada é uma estimativa académica, calculada com base numa taxa base de 6% e ajustes em função do montante e do prazo.",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+
+                    // Aviso discreto
+                    Text(
+                        text = "Não corresponde a uma proposta contratual real.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             },
             confirmButton = {
                 TextButton(onClick = { mostrarInfoTaxa.value = false }) {
@@ -362,8 +388,7 @@ private fun ResultadoCard(
 }
 
 
-
-@Composable
+    @Composable
 private fun InfoRow(
     label: String,
     value: String,
@@ -506,7 +531,7 @@ fun exportarPdfEmprestimo(
 
     pdf.finishPage(page)
 
-    // 2) Guardar em Downloads (MediaStore)
+    //  Guardar em Downloads (MediaStore)
     val resolver = context.contentResolver
 
     val fileName = "Simulacao_Emprestimo_${System.currentTimeMillis()}.pdf"
